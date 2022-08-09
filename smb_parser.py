@@ -1,5 +1,7 @@
-from lark import Lark, Transformer
 from itertools import product
+
+from lark import Lark, Transformer
+
 
 class SMBTransformer(Transformer):
     meet_dict: dict
@@ -9,18 +11,22 @@ class SMBTransformer(Transformer):
         self.meet_dict = meet_dict
 
     def num(self, n):
-        (n,) = n
+        n = n[0].value
         return n
 
     def name(self, name):
         (name,) = name
         return name
 
-    def assign_var(self, value):
-        return value
+    @staticmethod
+    def assign_var(values):
+        a, b = values
+        return a, b
 
     def meet(self, values):
         a, b = values
+        if a == b:  # idempotent
+            return b
         if f"({a},{b})" in self.meet_dict.keys():
             return self.meet_dict[f"({a},{b})"]
         else:
@@ -28,26 +34,33 @@ class SMBTransformer(Transformer):
 
     def d(self, values):
         a, b, c = values
-        if a == b and b == c:
+        if a == b and b == c:  # idempotent
             return c
+        # malcev
+        if a == b and all(k in self.meet_dict.keys() for k in [f"({b},{c})", f"({c},{b})"]):
+            return c
+        if c == b and all(k in self.meet_dict.keys() for k in [f"({b},{a})", f"({a},{b})"]):
+            return a
         return a, b, c
 
 
 class SMBParser:
     smb_grammar = """
-                    ?start: inf
-                        | start "=" inf     -> assign_var
-                        | "d(" inf "," inf "," inf ")"      -> d
+                    ?start: 
+                        | dlay
+                        | start "=" dlay     -> assign_var
+                    ?dlay: inf
+                        | dlay "+" inf -> meet
                     ?inf: atom
-                        | inf "+" atom      -> meet
+                        | "/(" inf "," atom "," atom ")"      -> d
                     ?atom: NAME         -> name 
-                        | DIGIT         -> num
+                        | NUMBER         -> num
                         | "(" inf ")" 
             
             
                     %import common.CNAME -> NAME
                     %import common.WS
-                    %import common.DIGIT
+                    %import common.NUMBER
             
                     %ignore WS
                     """
@@ -61,9 +74,18 @@ class SMBParser:
             self.meet[f"({left},{right})"] = right
             self.meet[f"({right},{left})"] = left
         else:
-            left, right = str.split("=")
-            l1, l2 = left.split("+")
-            self.meet[f"({l1},{l2})"] = right
+            left, right = self.parse(str)
+            try:
+                l1, l2 = left
+                self.meet[f"({l1},{l2})"] = right
+            except:
+                print(f"greska sa unosom stringa:\t{str}\n"
+                      f" parsirano:\t\t {self.parse(str)}\n"
+                      f"left:\t {left}, \t\t"
+                      f"right:\t {right}\n"
+                      f"nece biti unesen")
+                print(self.meet)
+                # input()
 
     def parse(self, str):
         tree = self.parser.parse(str)
@@ -90,16 +112,17 @@ class SMBParser:
         else:
             return self.nice(self.parse(str), depth=1)
 
-
-    def add_identity(self, id: [str], alphebet):
-        id_set = list(set(id).difference(("+", "(", ")", "=", " ")))
-        pr = list(product(alphebet, repeat=len(id_set)))
+    def add_identity(self, id: [str], alphabet):
+        id_set = set(id).difference(("+", "(", ")", "=", " ", "/"))
+        if id_set.intersection(set(alphabet)):
+            raise Exception("not disjunct")
+        id_set = list(id_set)
+        pr = list(product(alphabet, repeat=len(id_set)))
         temp = id
-        print(pr)
         for p in pr:
             for i in range(len(id_set)):
                 temp = temp.replace(id_set[i], p[i])
-                print(temp)
+                # print(temp)
             self.add_meet(temp)
             temp = id
         print(self.meet)
@@ -108,7 +131,7 @@ class SMBParser:
 def main():
     s = input("add rule, if not write 0 (a,b is a~b, a+b=c is usual \n\t")
     parserr = SMBParser()
-    parserr.add_identity("1+2=3", ["x","y","z"])
+    print(parserr.parse_nice(s))
 
 
 if __name__ == "__main__":
