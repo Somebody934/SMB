@@ -47,15 +47,14 @@ class SMBTransformer(Transformer):
 class SMBParser:
     smb_grammar = """
                     ?start: 
-                        | dlay
-                        | start "=" dlay     -> assign_var
-                    ?dlay: inf
-                        | dlay "+" inf -> meet
+                        | inf
+                        | start "=" inf     -> assign_var
                     ?inf: atom
-                        | "/(" inf "," atom "," atom ")"      -> d
+                        | inf "+" atom -> meet                              
                     ?atom: NAME         -> name 
                         | NUMBER         -> num
                         | "(" inf ")" 
+                        | "/(" inf "," inf "," inf ")" -> d
             
             
                     %import common.CNAME -> NAME
@@ -69,22 +68,22 @@ class SMBParser:
     parser = Lark(smb_grammar, start="start", parser="lalr", transformer=transformer)
 
     def add_meet(self, str):
-        if "," in str:
-            left, right = str.split(",")
-            self.meet[f"({left},{right})"] = right
-            self.meet[f"({right},{left})"] = left
-        else:
+        try:
             left, right = self.parse(str)
+            l1, l2 = left
+            self.meet[f"({l1},{l2})"] = right
+        except:
             try:
-                l1, l2 = left
-                self.meet[f"({l1},{l2})"] = right
+                left, right = str.split(",")
+                self.meet[f"({left},{right})"] = right
+                self.meet[f"({right},{left})"] = left
             except:
                 print(f"greska sa unosom stringa:\t{str}\n"
                       f" parsirano:\t\t {self.parse(str)}\n"
                       f"left:\t {left}, \t\t"
                       f"right:\t {right}\n"
                       f"nece biti unesen")
-                print(self.meet)
+                # print(self.meet)
                 # input()
 
     def parse(self, str):
@@ -100,7 +99,7 @@ class SMBParser:
                 return f"{self.nice(arr[0])}+{self.nice(arr[1])}"
             return f"({self.nice(arr[0])}+{self.nice(arr[1])})"
         elif len(arr) == 3:
-            return f"d({self.nice(arr[0])},{self.nice(arr[1])},{self.nice(arr[2])})"
+            return f"/({self.nice(arr[0])},{self.nice(arr[1])},{self.nice(arr[2])})"
         elif len(arr) == 1:
             return arr[0]
         else:
@@ -113,7 +112,8 @@ class SMBParser:
             return self.nice(self.parse(str), depth=1)
 
     def add_identity(self, id: [str], alphabet):
-        id_set = set(id).difference(("+", "(", ")", "=", " ", "/"))
+        id_set = set(id).difference(("+", "(", ")", "=", " ", "/", ","))
+        #print(id_set)
         if id_set.intersection(set(alphabet)):
             raise Exception("not disjunct")
         id_set = list(id_set)
@@ -121,17 +121,20 @@ class SMBParser:
         temp = id
         for p in pr:
             for i in range(len(id_set)):
-                temp = temp.replace(id_set[i], p[i])
+                temp = temp.replace(id_set[i], str(p[i]))
                 # print(temp)
             self.add_meet(temp)
             temp = id
-        print(self.meet)
+        # print(self.meet)
 
 
 def main():
-    s = input("add rule, if not write 0 (a,b is a~b, a+b=c is usual \n\t")
+    # s = input("add rule, if not write 0 (a,b is a~b, a+b=c is usual \n\t")
     parserr = SMBParser()
-    print(parserr.parse_nice(s))
+    s = "x,y"
+    parserr.add_meet(s)
+    print(parserr.meet)
+    # parserr.add_identity(s, ["1","2","3","4","5","6"])
 
 
 if __name__ == "__main__":
