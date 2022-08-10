@@ -11,24 +11,33 @@ from smb_parser import SMBParser
 # d(x+y, x+y, y+x) = y+x
 # d(y+x, x+y, x+y) = y+x
 
-list_of_id = [" ((x + y) + z) + ((z + y) + x) = (z + y) + x",
-              " ((x + a) + (y + b)) + ((a + x) + (b + y)) = (a + x) + (b + y)",
-              " /(x + a,y+b,z+c)+/(a+x,b+y, c+z) =/(a+x,b+y, c+z)", "   (x + y) + (y + x) = y + x",
-              " ((x + y) + z) + (x + (y + z)) = x + (y + z)", " (x + (y + z)) + ((x + y) + z) = (x + y) + z",
-              " /(x+y, x+y, y+x) = y+x", " /(y+x, x+y, x+y) = y+x"
+list_of_id = ["((x + y) + z) + ((z + y) + x) = (z + y) + x",
+              "((x + a) + (y + b)) + ((a + x) + (b + y)) = (a + x) + (b + y)",
+              "/(x + a,y+b,z+c)+/(a+x,b+y, c+z) =/(a+x,b+y, c+z)",
+              "((x + y) + z) + (x + (y + z)) = x + (y + z)",
+              "(x + (y + z)) + ((x + y) + z) = (x + y) + z",
+              "/(x+y, x+y, y+x) = y+x",
+              "/(y+x, x+y, x+y) = y+x"
               ]
 
 
 def main():
     parser = SMBParser()
-    var_num = 6
-    for identity in list_of_id:
-        print(identity)
-        parser.add_identity(identity, range(6))
-    while True:
-        s = input("Try identety\n")
-        par_s = parser.parse_nice(s)
-        print(par_s)
+    var_num = 4
+    #       0  1  2  3
+    mat = [[0, 1, 2, 3],  # 0
+           [0, 1, 3, 3],  # 1
+           [3, 2, 2, 3],  # 2
+           [2, 3, 2, 3]]  # 3
+    for i in range(4):
+        for j in range(4):
+            parser.add_meet(f"{i}+{j}={mat[i][j]}")
+    with open("3.txt", "w") as file:
+        for identity in list_of_id:
+            print(identity, file=file)
+            print(identity)
+            parser.calculate(identity, range(var_num), file)
+
 
 
 if __name__ == "__main__":
