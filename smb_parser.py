@@ -1,4 +1,5 @@
 from itertools import product
+from sys import stdout
 
 from lark import Lark, Transformer
 
@@ -78,13 +79,14 @@ class SMBParser:
                 self.meet[f"({left},{right})"] = right
                 self.meet[f"({right},{left})"] = left
             except:
-                print(f"greska sa unosom stringa:\t{str}\n"
-                      f" parsirano:\t\t {self.parse(str)}\n"
-                      f"left:\t {left}, \t\t"
-                      f"right:\t {right}\n"
-                      f"nece biti unesen")
+                # print(f"greska sa unosom stringa:\t{str}\n"
+                #       f" parsirano:\t\t {self.parse(str)}\n"
+                #       f"left:\t {left}, \t\t"
+                #       f"right:\t {right}\n"
+                #       f"nece biti unesen")
                 # print(self.meet)
                 # input()
+                pass
 
     def parse(self, str):
         tree = self.parser.parse(str)
@@ -113,7 +115,7 @@ class SMBParser:
 
     def add_identity(self, id: [str], alphabet):
         id_set = set(id).difference(("+", "(", ")", "=", " ", "/", ","))
-        #print(id_set)
+        # print(id_set)
         if id_set.intersection(set(alphabet)):
             raise Exception("not disjunct")
         id_set = list(id_set)
@@ -126,6 +128,25 @@ class SMBParser:
             self.add_meet(temp)
             temp = id
         # print(self.meet)
+
+    def calculate(self, id: [str], alphabet, file=stdout):
+        id_set = set(id).difference(("+", "(", ")", "=", " ", "/", ","))
+        if id_set.intersection(set(alphabet)):
+            raise Exception("not disjunct")
+        id_set = list(id_set)
+        pr = list(product(alphabet, repeat=len(id_set)))
+
+        temp = id
+        for p in pr:
+            for i in range(len(id_set)):
+                temp = temp.replace(id_set[i], str(p[i]))
+            nice_parse = self.parse_nice(temp).split(" = ")
+            if not nice_parse[0] == nice_parse[1]:
+                # print(p, end="\t\t")
+                print(self.parse_nice(temp), file=file)
+            temp = id
+        # print(self.meet)
+        # input()
 
 
 def main():
