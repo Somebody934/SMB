@@ -23,14 +23,16 @@ list_of_id = ["((x + y) + z) + ((z + y) + x) = (z + y) + x",
 
 def main():
     parser = SMBParser()
-    var_num = 4
+    var_num = 2
     #       0  1  2  3
-    mat = [[0, 1, 2, 3],  # 0
-           [0, 1, 3, 3],  # 1
-           [3, 2, 2, 3],  # 2
-           [2, 3, 2, 3]]  # 3
-    for i in range(4):
-        for j in range(4):
+    # mat = [[0, 1, 2, 3],  # 0
+    #        [0, 1, 3, 3],  # 1
+    #        [3, 2, 2, 3],  # 2
+    #        [2, 3, 2, 3]]  # 3
+    # mat = [[0, 2, 1], [2, 1, 0], [1, 0, 2]]
+    # mat = [[0,1],[1,1]]
+    for i in range(var_num):
+        for j in range(var_num):
             parser.add_meet(f"{i}+{j}={mat[i][j]}")
     with open("not_id.txt", "w") as file:
         for identity in list_of_id:

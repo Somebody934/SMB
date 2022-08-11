@@ -38,11 +38,14 @@ class SMBTransformer(Transformer):
         if a == b and b == c:  # idempotent
             return c
         # malcev
-        if a == b and all(k in self.meet_dict.keys() for k in [f"({b},{c})", f"({c},{b})"]):
-            return c
-        if c == b and all(k in self.meet_dict.keys() for k in [f"({b},{a})", f"({a},{b})"]):
-            return a
-        return a, b, c
+        try:
+            if a == b and self.meet_dict[f"({b},{c})"] == c and  self.meet_dict[f"({c},{b})"] == b:
+                return c
+            if c == b and self.meet_dict[f"({b},{a})"] == a and  self.meet_dict[f"({a},{b})"] == b:
+                return a
+        finally:
+            return a, b, c
+
 
 
 class SMBParser:
@@ -135,14 +138,14 @@ class SMBParser:
             raise Exception("not disjunct")
         id_set = list(id_set)
         pr = list(product(alphabet, repeat=len(id_set)))
-
+        print(id_set)
         temp = id
         for p in pr:
             for i in range(len(id_set)):
                 temp = temp.replace(id_set[i], str(p[i]))
             nice_parse = self.parse_nice(temp).split(" = ")
             if not nice_parse[0] == nice_parse[1]:
-                # print(p, end="\t\t")
+                print(p, end="\t\t", file=file)
                 print(self.parse_nice(temp), file=file)
             temp = id
         # print(self.meet)
