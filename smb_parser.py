@@ -39,13 +39,12 @@ class SMBTransformer(Transformer):
             return c
         # malcev
         try:
-            if a == b and self.meet_dict[f"({b},{c})"] == c and  self.meet_dict[f"({c},{b})"] == b:
+            if a == b and self.meet_dict[f"({b},{c})"] == c and self.meet_dict[f"({c},{b})"] == b:
                 return c
-            if c == b and self.meet_dict[f"({b},{a})"] == a and  self.meet_dict[f"({a},{b})"] == b:
+            if c == b and self.meet_dict[f"({b},{a})"] == a and self.meet_dict[f"({a},{b})"] == b:
                 return a
         finally:
             return a, b, c
-
 
 
 class SMBParser:

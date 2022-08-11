@@ -31,6 +31,7 @@ def main():
     #        [2, 3, 2, 3]]  # 3
     # mat = [[0, 2, 1], [2, 1, 0], [1, 0, 2]]
     # mat = [[0,1],[1,1]]
+    mat = []
     for i in range(var_num):
         for j in range(var_num):
             parser.add_meet(f"{i}+{j}={mat[i][j]}")
